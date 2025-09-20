@@ -89,7 +89,15 @@ export const useGameStore = defineStore('game', {
       })
 
       this.socket.on('player-joined', (data) => {
-        this.gameState.players.push(data.player)
+        // 檢查玩家是否已存在，避免重複添加
+        const existingPlayer = this.gameState.players.find(p => p.id === data.player.id)
+        if (!existingPlayer) {
+          this.gameState.players.push(data.player)
+        }
+      })
+
+      this.socket.on('players-updated', (data) => {
+        this.gameState.players = data.players
       })
 
       this.socket.on('player-left', (data) => {

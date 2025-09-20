@@ -60,6 +60,7 @@ io.on('connection', (socket) => {
       gameState.host = socket.id;
     }
 
+    // 發送完整遊戲狀態給新加入的玩家
     socket.emit('game-state', {
       ...gameState,
       players: Array.from(gameState.players.values()),
@@ -69,9 +70,15 @@ io.on('connection', (socket) => {
       }
     });
 
+    // 向所有其他玩家廣播新玩家加入
     socket.broadcast.emit('player-joined', {
       player: gameState.players.get(socket.id),
       totalPlayers: gameState.players.size
+    });
+
+    // 也發送完整的玩家列表給所有人，確保同步
+    io.emit('players-updated', {
+      players: Array.from(gameState.players.values())
     });
   });
 

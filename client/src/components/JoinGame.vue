@@ -110,4 +110,56 @@ const joinGame = () => {
   position: absolute;
   left: 0;
 }
+
+@media (max-width: 768px) {
+  .join-game {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  .join-game h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .game-info {
+    padding: 1rem;
+  }
+
+  .game-info h3 {
+    font-size: 1.1rem;
+  }
+
+  .game-info li {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .join-game {
+    padding: 0.75rem;
+  }
+
+  .join-game h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .join-form {
+    margin-bottom: 1.5rem;
+  }
+
+  .game-info {
+    padding: 0.75rem;
+  }
+
+  .game-info li {
+    font-size: 0.85rem;
+  }
+}
 </style>

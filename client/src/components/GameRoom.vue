@@ -502,14 +502,121 @@ const startNewGame = () => {
 }
 
 @media (max-width: 768px) {
+  .game-room {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
   .game-header {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
   }
   
-  .stats-grid,
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
   .choice-buttons,
   .result-buttons {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .choice-btn {
+    padding: 1.25rem;
+    font-size: 1.2rem;
+  }
+
+  .card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .player-item {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .stat-item {
+    padding: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .stat-amount {
+    font-size: 0.9rem;
+  }
+
+  .winner-item,
+  .loser-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .result-icon {
+    font-size: 3rem;
+  }
+
+  .result-text {
+    font-size: 1.2rem;
+  }
+
+  .betting-area input[type="number"] {
+    font-size: 1.1rem;
+    padding: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .total-pool,
+  .total-pool-final {
+    font-size: 1rem;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-room {
+    padding: 0.5rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  .game-header {
+    gap: 0.75rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .player-item {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .choice-btn {
+    padding: 1rem;
+    font-size: 1.1rem;
+  }
+
+  .stat-item {
+    padding: 0.5rem;
+  }
+
+  .result-icon {
+    font-size: 2.5rem;
   }
 }
 </style>

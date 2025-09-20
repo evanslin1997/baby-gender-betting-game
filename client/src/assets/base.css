@@ -84,3 +84,23 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* 改善手機版觸控體驗 */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px; /* 防止iOS縮放 */
+  }
+  
+  /* 改善觸控目標大小 */
+  button, 
+  input, 
+  select, 
+  textarea {
+    min-height: 44px; /* Apple推薦的最小觸控目標 */
+  }
+  
+  /* 改善可讀性 */
+  h1, h2, h3 {
+    line-height: 1.3;
+  }
+}
