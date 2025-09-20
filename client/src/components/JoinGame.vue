@@ -1,6 +1,6 @@
 <template>
   <div class="join-game card">
-    <h2>🎮 加入遊戲</h2>
+    <h2>🥛 林豆漿有沒有GG</h2>
     <form @submit.prevent="joinGame" class="join-form">
       <div class="form-group">
         <label for="playerName">玩家暱稱</label>
@@ -19,18 +19,21 @@
         class="btn btn-primary"
         :disabled="!playerName.trim() || !gameStore.connected"
       >
-        {{ gameStore.connected ? '加入遊戲' : '連線中...' }}
+        {{ gameStore.connected ? '加入/重新進入遊戲' : '連線中...' }}
       </button>
     </form>
 
     <div class="game-info">
       <h3>🎯 遊戲規則</h3>
       <ul>
-        <li>猜測寶寶是男生還是女生</li>
-        <li>自訂下注金額</li>
-        <li>猜對的玩家平分猜錯玩家的下注金額</li>
+        <li>猜測林豆漿是男生還是女生</li>
+        <li>自訂投注金額，金額越高排名越前</li>
+        <li>📊 排名規則：</li>
+        <li>• 6人以上：前3名平分獎金，後3名懲罰</li>
+        <li>• 3-5人：1st拿70%，2nd拿30%，其他懲罰</li>
+        <li>• 少於3人：第1名拿全部，其他懲罰</li>
         <li>第一個加入的玩家成為主持人</li>
-        <li>主持人負責開始遊戲和宣布結果</li>
+        <li>💡 使用相同暱稱可重新進入遊戲修改選項</li>
       </ul>
     </div>
   </div>

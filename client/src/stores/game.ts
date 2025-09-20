@@ -14,6 +14,8 @@ export interface Bet {
   amount: number
   choice: 'boy' | 'girl'
   winAmount?: number
+  penalty?: number
+  rank?: number
 }
 
 export interface GameState {
@@ -49,7 +51,10 @@ export const useGameStore = defineStore('game', {
     },
     winners: [] as Bet[],
     losers: [] as Bet[],
-    totalPool: 0
+    totalPool: 0,
+    middlePlayers: [] as Bet[],
+    totalPlayers: 0,
+    gameType: 'classic' as 'classic' | 'ranking'
   }),
 
   getters: {
@@ -100,6 +105,16 @@ export const useGameStore = defineStore('game', {
         this.gameState.players = data.players
       })
 
+      this.socket.on('player-rejoined', (data) => {
+        // 玩家重新加入時，更新玩家列表
+        const existingPlayerIndex = this.gameState.players.findIndex(p => p.name === data.player.name)
+        if (existingPlayerIndex !== -1) {
+          this.gameState.players[existingPlayerIndex] = data.player
+        } else {
+          this.gameState.players.push(data.player)
+        }
+      })
+
       this.socket.on('player-left', (data) => {
         this.gameState.players = this.gameState.players.filter(p => p.id !== data.playerId)
         if (data.newHost) {
@@ -143,9 +158,12 @@ export const useGameStore = defineStore('game', {
       this.socket.on('game-ended', (data) => {
         this.gameState.status = 'ended'
         this.gameState.result = data.result
-        this.winners = data.winners
-        this.losers = data.losers
-        this.totalPool = data.totalPool
+        this.winners = data.winners || []
+        this.losers = data.losers || []
+        this.middlePlayers = data.middlePlayers || []
+        this.totalPool = data.totalPool || 0
+        this.totalPlayers = data.totalPlayers || 0
+        this.gameType = data.gameType || 'classic'
       })
     },
 

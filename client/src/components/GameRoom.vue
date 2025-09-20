@@ -164,7 +164,7 @@
 
         <div class="results-breakdown">
           <div v-if="gameStore.winners.length > 0" class="winners-section">
-            <h3>🏆 恭喜中獎</h3>
+            <h3>🏆 獲獎玩家</h3>
             <div class="winner-list">
               <div
                 v-for="winner in gameStore.winners"
@@ -172,6 +172,7 @@
                 class="winner-item"
                 :class="{ 'is-current-player': winner.playerId === gameStore.currentPlayer?.id }"
               >
+                <div class="rank-badge rank-winner">第{{ winner.rank }}名</div>
                 <span class="winner-name">{{ winner.playerName }}</span>
                 <span class="winner-bet">投注: NT$ {{ winner.amount.toLocaleString() }}</span>
                 <span class="winner-prize">獲得: NT$ {{ winner.winAmount?.toLocaleString() }}</span>
@@ -179,8 +180,25 @@
             </div>
           </div>
 
+          <div v-if="gameStore.middlePlayers && gameStore.middlePlayers.length > 0" class="middle-section">
+            <h3>😐 平安玩家</h3>
+            <div class="middle-list">
+              <div
+                v-for="middle in gameStore.middlePlayers"
+                :key="middle.playerId"
+                class="middle-item"
+                :class="{ 'is-current-player': middle.playerId === gameStore.currentPlayer?.id }"
+              >
+                <div class="rank-badge rank-middle">第{{ middle.rank }}名</div>
+                <span class="middle-name">{{ middle.playerName }}</span>
+                <span class="middle-bet">投注: NT$ {{ middle.amount.toLocaleString() }}</span>
+                <span class="middle-result">不輸不贏</span>
+              </div>
+            </div>
+          </div>
+
           <div v-if="gameStore.losers.length > 0" class="losers-section">
-            <h3>💸 未中獎</h3>
+            <h3>💸 懲罰玩家</h3>
             <div class="loser-list">
               <div
                 v-for="loser in gameStore.losers"
@@ -188,8 +206,10 @@
                 class="loser-item"
                 :class="{ 'is-current-player': loser.playerId === gameStore.currentPlayer?.id }"
               >
+                <div class="rank-badge rank-loser">第{{ loser.rank }}名</div>
                 <span class="loser-name">{{ loser.playerName }}</span>
-                <span class="loser-bet">損失: NT$ {{ loser.amount.toLocaleString() }}</span>
+                <span class="loser-bet">投注: NT$ {{ loser.amount.toLocaleString() }}</span>
+                <span class="loser-penalty">懲罰: NT$ {{ loser.penalty?.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -278,23 +298,31 @@ const startNewGame = () => {
 }
 
 .player-item {
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
+  border: 2px solid #90caf9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  color: #1565c0;
 }
 
 .player-item.is-host {
-  background: linear-gradient(45deg, #ff9800, #f57f17);
+  background: linear-gradient(135deg, #ff6f00, #ff8f00);
   color: white;
+  border-color: #ef6c00;
+  box-shadow: 0 3px 6px rgba(255, 111, 0, 0.3);
 }
 
 .player-item.is-current {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
+  border-color: #5e72e4;
+  box-shadow: 0 3px 6px rgba(102, 126, 234, 0.3);
 }
 
 .host-badge,
@@ -462,33 +490,100 @@ const startNewGame = () => {
   gap: 0.5rem;
 }
 
-.winner-item,
-.loser-item {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 0.75rem;
-  border-radius: 10px;
-  background: #f5f5f5;
+.rank-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
+  margin-right: 0.5rem;
 }
 
-.winner-item.is-current-player {
-  background: rgba(76, 175, 80, 0.1);
+.rank-winner {
+  background: linear-gradient(135deg, #ffd700, #ffb300);
+  color: #b26500;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+.rank-middle {
+  background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+  color: #424242;
+  box-shadow: 0 2px 4px rgba(189, 189, 189, 0.3);
+}
+
+.rank-loser {
+  background: linear-gradient(135deg, #ffcdd2, #ef9a9a);
+  color: #c62828;
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+}
+
+.winner-item,
+.middle-item,
+.loser-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 15px;
+  background: #f5f5f5;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.winner-item {
+  background: linear-gradient(135deg, #e8f5e8, #c8e6c8);
   border: 2px solid #4caf50;
 }
 
-.loser-item.is-current-player {
-  background: rgba(244, 67, 54, 0.1);
+.middle-item {
+  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+  border: 2px solid #9e9e9e;
+}
+
+.loser-item {
+  background: linear-gradient(135deg, #ffebee, #ffcdd2);
   border: 2px solid #f44336;
+}
+
+.winner-item.is-current-player {
+  background: linear-gradient(135deg, #c8e6c8, #a5d6a5);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.middle-item.is-current-player {
+  background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+  box-shadow: 0 4px 8px rgba(158, 158, 158, 0.3);
+}
+
+.loser-item.is-current-player {
+  background: linear-gradient(135deg, #ffcdd2, #ef9a9a);
+  box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
 }
 
 .winner-prize {
   font-weight: bold;
-  color: #4caf50;
+  color: #2e7d32;
+  background: rgba(76, 175, 80, 0.1);
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
 }
 
-.loser-bet {
-  color: #f44336;
+.loser-penalty {
+  font-weight: bold;
+  color: #c62828;
+  background: rgba(244, 67, 54, 0.1);
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+}
+
+.middle-result {
+  font-weight: bold;
+  color: #616161;
+  background: rgba(158, 158, 158, 0.1);
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
 }
 
 .total-pool-final {
@@ -552,10 +647,18 @@ const startNewGame = () => {
   }
 
   .winner-item,
+  .middle-item,
   .loser-item {
     grid-template-columns: 1fr;
     gap: 0.5rem;
     text-align: center;
+    padding: 0.75rem;
+  }
+
+  .rank-badge {
+    margin: 0 auto 0.5rem auto;
+    display: block;
+    width: fit-content;
   }
 
   .result-icon {
