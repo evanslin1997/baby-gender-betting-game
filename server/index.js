@@ -51,36 +51,39 @@ io.on('connection', (socket) => {
     const playerName = typeof data === 'string' ? data : data.playerName;
     const confirmRejoin = typeof data === 'object' ? data.confirmRejoin : false;
     
-    // 檢查是否已有相同名稱的玩家存在且正在線
+    // 檢查是否有相同名稱的玩家記錄
     const existingPlayerEntry = Array.from(gameState.players.entries())
-      .find(([socketId, player]) => player.name === playerName && socketId !== socket.id);
-    
-    // 檢查是否有離線但記錄仍存在的同名玩家（用於重新加入）
-    const rejoinPlayerEntry = Array.from(gameState.players.entries())
       .find(([_, player]) => player.name === playerName);
     
     let isRejoining = false;
     
     if (existingPlayerEntry) {
-      // 如果有其他玩家正在使用這個名稱，拒絕加入
-      socket.emit('join-error', {
-        message: `暱稱 "${playerName}" 已被其他玩家使用，請選擇其他名稱`
-      });
-      return;
+      const [existingSocketId, existingPlayer] = existingPlayerEntry;
+      
+      // 檢查該玩家是否正在線上（通過檢查socket連接）
+      const isPlayerOnline = io.sockets.sockets.has(existingSocketId);
+      
+      if (isPlayerOnline && existingSocketId !== socket.id) {
+        // 如果有其他玩家正在線且使用這個名稱，拒絕加入
+        socket.emit('join-error', {
+          message: `暱稱 "${playerName}" 已被其他玩家使用，請選擇其他名稱`
+        });
+        return;
+      }
+      
+      if (!isPlayerOnline && !confirmRejoin) {
+        // 如果玩家離線且沒有確認重新加入，詢問用戶
+        socket.emit('confirm-rejoin', {
+          playerName: playerName,
+          message: `暱稱 "${playerName}" 已存在記錄，是否要重新加入並修改選項？`
+        });
+        return;
+      }
     }
     
-    if (rejoinPlayerEntry && !confirmRejoin) {
-      // 如果名稱存在但沒有確認重新加入，詢問用戶
-      socket.emit('confirm-rejoin', {
-        playerName: playerName,
-        message: `暱稱 "${playerName}" 已存在記錄，是否要重新加入並修改選項？`
-      });
-      return;
-    }
-    
-    if (rejoinPlayerEntry && rejoinPlayerEntry[0] !== socket.id) {
+    if (existingPlayerEntry && existingPlayerEntry[0] !== socket.id) {
       // 重新加入：移除舊的socket ID記錄，使用新的socket ID
-      const [oldSocketId, existingPlayer] = rejoinPlayerEntry;
+      const [oldSocketId, existingPlayer] = existingPlayerEntry;
       gameState.players.delete(oldSocketId);
       gameState.players.set(socket.id, {
         ...existingPlayer,
