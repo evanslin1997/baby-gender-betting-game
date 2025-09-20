@@ -95,12 +95,22 @@ body {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #333;
+}
+
+.card h3 {
+  color: #222;
+  font-weight: 600;
+}
+
+.card p {
+  color: #444;
 }
 
 .btn {
@@ -117,17 +127,22 @@ body {
 
 .btn-primary {
   background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  border: 2px solid transparent;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .btn-success {
   background: linear-gradient(45deg, #4caf50, #45a049);
-  color: white;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  border: 2px solid transparent;
 }
 
 .btn-success:hover {
@@ -153,16 +168,22 @@ body {
 
 .input {
   padding: 0.75rem;
-  border: 2px solid #ddd;
+  border: 2px solid #bbb;
   border-radius: 10px;
   font-size: 1rem;
   width: 100%;
   transition: border-color 0.3s ease;
+  background: #fff;
+  color: #333;
 }
 
 .input:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.input::placeholder {
+  color: #888;
 }
 </style>

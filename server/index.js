@@ -75,13 +75,21 @@ io.on('connection', (socket) => {
         id: socket.id
       });
       
+      // 更新投注記錄中的 playerId
+      ['boy', 'girl'].forEach(choice => {
+        const betIndex = gameState.bets[choice].findIndex(bet => bet.playerId === oldSocketId);
+        if (betIndex !== -1) {
+          gameState.bets[choice][betIndex].playerId = socket.id;
+        }
+      });
+      
       // 如果是主持人重新加入，更新主持人ID
       if (gameState.host === oldSocketId) {
         gameState.host = socket.id;
       }
       
       isRejoining = true;
-      console.log(`玩家 ${playerName} 重新加入遊戲`);
+      console.log(`玩家 ${playerName} 重新加入遊戲，投注記錄已更新`);
     } else if (!gameState.players.has(socket.id)) {
       // 新玩家加入
       gameState.players.set(socket.id, {
@@ -220,6 +228,10 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('用戶斷線:', socket.id);
     
+    const disconnectedPlayer = gameState.players.get(socket.id);
+    if (!disconnectedPlayer) return;
+    
+    // 如果是主持人離開，轉移主持人權限給其他玩家
     if (gameState.host === socket.id && gameState.players.size > 1) {
       const remainingPlayers = Array.from(gameState.players.values())
         .filter(p => p.id !== socket.id);
@@ -227,19 +239,18 @@ io.on('connection', (socket) => {
       if (remainingPlayers.length > 0) {
         gameState.host = remainingPlayers[0].id;
         gameState.players.get(gameState.host).isHost = true;
+        console.log(`主持人轉移給: ${remainingPlayers[0].name}`);
       }
     }
     
-    gameState.players.delete(socket.id);
-    
-    ['boy', 'girl'].forEach(choice => {
-      gameState.bets[choice] = gameState.bets[choice].filter(
-        bet => bet.playerId !== socket.id
-      );
-    });
+    // 注意：我們不刪除玩家記錄和投注記錄，讓他們可以重新加入
+    // 只是從當前連線的玩家列表中暫時移除，但保留在 gameState.players 中供重新加入
+    console.log(`玩家 ${disconnectedPlayer.name} 離線，但記錄保留供重新加入`);
 
-    socket.broadcast.emit('player-left', {
+    // 通知其他玩家有人離線（但不從列表中移除）
+    socket.broadcast.emit('player-disconnected', {
       playerId: socket.id,
+      playerName: disconnectedPlayer.name,
       totalPlayers: gameState.players.size,
       newHost: gameState.host
     });

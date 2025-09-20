@@ -293,29 +293,42 @@ const startNewGame = () => {
 
 .player-item.is-host {
   background: linear-gradient(135deg, #ff6f00, #ff8f00);
-  color: white;
+  color: #fff;
   border-color: #ef6c00;
   box-shadow: 0 3px 6px rgba(255, 111, 0, 0.3);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .player-item.is-current {
   background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  color: #fff;
   border-color: #5e72e4;
   box-shadow: 0 3px 6px rgba(102, 126, 234, 0.3);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .host-badge,
 .current-badge {
   font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
   padding: 0.2rem 0.5rem;
   border-radius: 10px;
+  font-weight: 600;
 }
 
-.status-waiting { color: #ff9800; }
-.status-betting { color: #4caf50; }
-.status-ended { color: #f44336; }
+.status-waiting { 
+  color: #e65100; 
+  font-weight: 600;
+}
+.status-betting { 
+  color: #2e7d32; 
+  font-weight: 600;
+}
+.status-ended { 
+  color: #c62828; 
+  font-weight: 600;
+}
 
 .waiting-section,
 .betting-section,

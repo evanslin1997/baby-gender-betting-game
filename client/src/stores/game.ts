@@ -125,6 +125,20 @@ export const useGameStore = defineStore('game', {
         }
       })
 
+      this.socket.on('player-disconnected', (data) => {
+        // 玩家斷線但保留記錄，只在 UI 上標示離線狀態
+        const player = this.gameState.players.find(p => p.id === data.playerId)
+        if (player) {
+          // 可以在這裡添加離線標示，但現在我們保持簡單
+          console.log(`玩家 ${data.playerName} 暫時離線`)
+        }
+        if (data.newHost) {
+          const newHost = this.gameState.players.find(p => p.id === data.newHost)
+          if (newHost) newHost.isHost = true
+          this.gameState.host = data.newHost
+        }
+      })
+
       this.socket.on('betting-started', (data) => {
         this.gameState.status = data.status
         this.gameState.id = data.gameId
