@@ -106,12 +106,12 @@ export const useGameStore = defineStore('game', {
         this.totalPool = 0
       })
 
-      this.socket.on('bet-placed', (data) => {
-        const choice = data.bet.choice
+      this.socket.on('bet-placed', (data: { bet: Bet; totalBets: any }) => {
+        const choice = data.bet.choice as 'boy' | 'girl'
         const otherChoice = choice === 'boy' ? 'girl' : 'boy'
         
         const existingBetIndex = this.gameState.bets[choice].findIndex(
-          bet => bet.playerId === data.bet.playerId
+          (bet: Bet) => bet.playerId === data.bet.playerId
         )
         
         if (existingBetIndex !== -1) {
@@ -121,7 +121,7 @@ export const useGameStore = defineStore('game', {
         }
 
         this.gameState.bets[otherChoice] = this.gameState.bets[otherChoice].filter(
-          bet => bet.playerId !== data.bet.playerId
+          (bet: Bet) => bet.playerId !== data.bet.playerId
         )
 
         this.totalBets = data.totalBets
