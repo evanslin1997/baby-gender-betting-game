@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header class="app-header">
-      <h1>👶 寶寶性別猜猜樂</h1>
+      <h1>🥛 林豆漿有沒有GG</h1>
       <div v-if="gameStore.connected" class="connection-status connected">
         ✅ 已連線
       </div>

@@ -21,18 +21,20 @@
       >
         {{ gameStore.connected ? '加入/重新進入遊戲' : '連線中...' }}
       </button>
+      
+      <div v-if="gameStore.joinError" class="error-message">
+        ⚠️ {{ gameStore.joinError }}
+      </div>
     </form>
 
     <div class="game-info">
       <h3>🎯 遊戲規則</h3>
       <ul>
         <li>猜測林豆漿是男生還是女生</li>
-        <li>自訂投注金額，金額越高排名越前</li>
-        <li>📊 排名規則：</li>
-        <li>• 6人以上：前3名平分獎金，後3名懲罰</li>
-        <li>• 3-5人：1st拿70%，2nd拿30%，其他懲罰</li>
-        <li>• 少於3人：第1名拿全部，其他懲罰</li>
+        <li>自訂投注金額</li>
+        <li>🏆 獎金規則：猜對的玩家平分所有獎金</li>
         <li>第一個加入的玩家成為主持人</li>
+        <li>⚠️ 每個暱稱只能被一個玩家使用</li>
         <li>💡 使用相同暱稱可重新進入遊戲修改選項</li>
       </ul>
     </div>
@@ -112,6 +114,17 @@ const joinGame = () => {
   font-weight: bold;
   position: absolute;
   left: 0;
+}
+
+.error-message {
+  background: linear-gradient(135deg, #ffebee, #ffcdd2);
+  color: #c62828;
+  padding: 0.75rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  border: 2px solid #f44336;
+  font-weight: 500;
+  text-align: center;
 }
 
 @media (max-width: 768px) {

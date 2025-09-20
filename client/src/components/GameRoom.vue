@@ -164,7 +164,7 @@
 
         <div class="results-breakdown">
           <div v-if="gameStore.winners.length > 0" class="winners-section">
-            <h3>🏆 獲獎玩家</h3>
+            <h3>🏆 恭喜中獎</h3>
             <div class="winner-list">
               <div
                 v-for="winner in gameStore.winners"
@@ -172,7 +172,6 @@
                 class="winner-item"
                 :class="{ 'is-current-player': winner.playerId === gameStore.currentPlayer?.id }"
               >
-                <div class="rank-badge rank-winner">第{{ winner.rank }}名</div>
                 <span class="winner-name">{{ winner.playerName }}</span>
                 <span class="winner-bet">投注: NT$ {{ winner.amount.toLocaleString() }}</span>
                 <span class="winner-prize">獲得: NT$ {{ winner.winAmount?.toLocaleString() }}</span>
@@ -180,25 +179,8 @@
             </div>
           </div>
 
-          <div v-if="gameStore.middlePlayers && gameStore.middlePlayers.length > 0" class="middle-section">
-            <h3>😐 平安玩家</h3>
-            <div class="middle-list">
-              <div
-                v-for="middle in gameStore.middlePlayers"
-                :key="middle.playerId"
-                class="middle-item"
-                :class="{ 'is-current-player': middle.playerId === gameStore.currentPlayer?.id }"
-              >
-                <div class="rank-badge rank-middle">第{{ middle.rank }}名</div>
-                <span class="middle-name">{{ middle.playerName }}</span>
-                <span class="middle-bet">投注: NT$ {{ middle.amount.toLocaleString() }}</span>
-                <span class="middle-result">不輸不贏</span>
-              </div>
-            </div>
-          </div>
-
           <div v-if="gameStore.losers.length > 0" class="losers-section">
-            <h3>💸 懲罰玩家</h3>
+            <h3>💸 未中獎</h3>
             <div class="loser-list">
               <div
                 v-for="loser in gameStore.losers"
@@ -206,10 +188,8 @@
                 class="loser-item"
                 :class="{ 'is-current-player': loser.playerId === gameStore.currentPlayer?.id }"
               >
-                <div class="rank-badge rank-loser">第{{ loser.rank }}名</div>
                 <span class="loser-name">{{ loser.playerName }}</span>
-                <span class="loser-bet">投注: NT$ {{ loser.amount.toLocaleString() }}</span>
-                <span class="loser-penalty">懲罰: NT$ {{ loser.penalty?.toLocaleString() }}</span>
+                <span class="loser-bet">損失: NT$ {{ loser.amount.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -519,10 +499,9 @@ const startNewGame = () => {
 }
 
 .winner-item,
-.middle-item,
 .loser-item {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: 1fr auto auto;
   gap: 1rem;
   padding: 1rem;
   border-radius: 15px;
@@ -530,36 +509,45 @@ const startNewGame = () => {
   align-items: center;
   margin-bottom: 0.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #333;
 }
 
 .winner-item {
   background: linear-gradient(135deg, #e8f5e8, #c8e6c8);
   border: 2px solid #4caf50;
-}
-
-.middle-item {
-  background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
-  border: 2px solid #9e9e9e;
+  color: #1b5e20;
 }
 
 .loser-item {
   background: linear-gradient(135deg, #ffebee, #ffcdd2);
   border: 2px solid #f44336;
+  color: #b71c1c;
 }
 
 .winner-item.is-current-player {
   background: linear-gradient(135deg, #c8e6c8, #a5d6a5);
   box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
-}
-
-.middle-item.is-current-player {
-  background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
-  box-shadow: 0 4px 8px rgba(158, 158, 158, 0.3);
+  border: 3px solid #2e7d32;
+  color: #1b5e20;
 }
 
 .loser-item.is-current-player {
   background: linear-gradient(135deg, #ffcdd2, #ef9a9a);
   box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+  border: 3px solid #c62828;
+  color: #b71c1c;
+}
+
+.winner-name,
+.loser-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.winner-bet,
+.loser-bet {
+  color: #666;
+  font-size: 0.9rem;
 }
 
 .winner-prize {

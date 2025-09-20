@@ -54,7 +54,8 @@ export const useGameStore = defineStore('game', {
     totalPool: 0,
     middlePlayers: [] as Bet[],
     totalPlayers: 0,
-    gameType: 'classic' as 'classic' | 'ranking'
+    gameType: 'classic' as 'classic' | 'ranking',
+    joinError: null as string | null
   }),
 
   getters: {
@@ -160,15 +161,17 @@ export const useGameStore = defineStore('game', {
         this.gameState.result = data.result
         this.winners = data.winners || []
         this.losers = data.losers || []
-        this.middlePlayers = data.middlePlayers || []
         this.totalPool = data.totalPool || 0
-        this.totalPlayers = data.totalPlayers || 0
-        this.gameType = data.gameType || 'classic'
+      })
+
+      this.socket.on('join-error', (data) => {
+        this.joinError = data.message
       })
     },
 
     joinGame(playerName: string) {
       if (this.socket) {
+        this.joinError = null // 清除之前的錯誤
         this.socket.emit('join-game', playerName)
       }
     },
