@@ -47,7 +47,10 @@ let gameState = {
 io.on('connection', (socket) => {
   console.log('用戶連接:', socket.id);
 
-  socket.on('join-game', (playerName) => {
+  socket.on('join-game', (data) => {
+    const playerName = typeof data === 'string' ? data : data.playerName;
+    const confirmRejoin = typeof data === 'object' ? data.confirmRejoin : false;
+    
     // 檢查是否已有相同名稱的玩家存在且正在線
     const existingPlayerEntry = Array.from(gameState.players.entries())
       .find(([socketId, player]) => player.name === playerName && socketId !== socket.id);
@@ -62,6 +65,15 @@ io.on('connection', (socket) => {
       // 如果有其他玩家正在使用這個名稱，拒絕加入
       socket.emit('join-error', {
         message: `暱稱 "${playerName}" 已被其他玩家使用，請選擇其他名稱`
+      });
+      return;
+    }
+    
+    if (rejoinPlayerEntry && !confirmRejoin) {
+      // 如果名稱存在但沒有確認重新加入，詢問用戶
+      socket.emit('confirm-rejoin', {
+        playerName: playerName,
+        message: `暱稱 "${playerName}" 已存在記錄，是否要重新加入並修改選項？`
       });
       return;
     }

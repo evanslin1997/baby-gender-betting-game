@@ -25,6 +25,28 @@
       <div v-if="gameStore.joinError" class="error-message">
         ⚠️ {{ gameStore.joinError }}
       </div>
+      
+      <div v-if="gameStore.rejoinConfirm" class="confirm-dialog">
+        <div class="confirm-message">
+          ❓ {{ gameStore.rejoinConfirm.message }}
+        </div>
+        <div class="confirm-buttons">
+          <button 
+            @click="confirmRejoin" 
+            class="btn btn-primary"
+            type="button"
+          >
+            是，重新加入
+          </button>
+          <button 
+            @click="cancelRejoin" 
+            class="btn btn-secondary"
+            type="button"
+          >
+            取消
+          </button>
+        </div>
+      </div>
     </form>
 
     <div class="game-info">
@@ -52,6 +74,16 @@ const joinGame = () => {
   if (playerName.value.trim() && gameStore.connected) {
     gameStore.joinGame(playerName.value.trim())
   }
+}
+
+const confirmRejoin = () => {
+  if (gameStore.rejoinConfirm) {
+    gameStore.confirmRejoin(gameStore.rejoinConfirm.playerName)
+  }
+}
+
+const cancelRejoin = () => {
+  gameStore.cancelRejoin()
 }
 </script>
 
@@ -127,6 +159,46 @@ const joinGame = () => {
   text-align: center;
 }
 
+.confirm-dialog {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border: 2px solid #2196f3;
+  border-radius: 15px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.confirm-message {
+  color: #1565c0;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-buttons .btn {
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  min-width: 120px;
+}
+
+.btn-secondary {
+  background: linear-gradient(45deg, #9e9e9e, #757575);
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  border: 2px solid transparent;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(158, 158, 158, 0.4);
+}
+
 @media (max-width: 768px) {
   .join-game {
     max-width: 100%;
@@ -176,6 +248,16 @@ const joinGame = () => {
 
   .game-info li {
     font-size: 0.85rem;
+  }
+
+  .confirm-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .confirm-buttons .btn {
+    width: 100%;
+    min-width: auto;
   }
 }
 </style>

@@ -55,7 +55,8 @@ export const useGameStore = defineStore('game', {
     middlePlayers: [] as Bet[],
     totalPlayers: 0,
     gameType: 'classic' as 'classic' | 'ranking',
-    joinError: null as string | null
+    joinError: null as string | null,
+    rejoinConfirm: null as { playerName: string; message: string } | null
   }),
 
   getters: {
@@ -181,13 +182,26 @@ export const useGameStore = defineStore('game', {
       this.socket.on('join-error', (data) => {
         this.joinError = data.message
       })
+
+      this.socket.on('confirm-rejoin', (data) => {
+        this.rejoinConfirm = data
+      })
     },
 
-    joinGame(playerName: string) {
+    joinGame(playerName: string, confirmRejoin = false) {
       if (this.socket) {
         this.joinError = null // 清除之前的錯誤
-        this.socket.emit('join-game', playerName)
+        this.rejoinConfirm = null // 清除確認訊息
+        this.socket.emit('join-game', { playerName, confirmRejoin })
       }
+    },
+
+    confirmRejoin(playerName: string) {
+      this.joinGame(playerName, true)
+    },
+
+    cancelRejoin() {
+      this.rejoinConfirm = null
     },
 
     startBetting() {
