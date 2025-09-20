@@ -17,12 +17,20 @@ const io = socketIo(server, {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..')));
 
-// 提供測試頁面
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'test.html'));
-});
+// 在生產環境中提供建置後的前端檔案
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+  app.get('/', (_, res) => {
+    res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
+  });
+} else {
+  // 開發環境提供測試頁面
+  app.use(express.static(path.join(__dirname, '..')));
+  app.get('/', (_, res) => {
+    res.sendFile(path.join(__dirname, '..', 'test.html'));
+  });
+}
 
 let gameState = {
   id: null,

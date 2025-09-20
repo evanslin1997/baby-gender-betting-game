@@ -66,7 +66,12 @@ export const useGameStore = defineStore('game', {
     connect() {
       if (this.socket) return
 
-      this.socket = io('http://localhost:3001')
+      // 自動偵測環境 - 生產環境使用當前網址，開發環境使用 localhost
+      const serverUrl = import.meta.env.PROD 
+        ? window.location.origin 
+        : 'http://localhost:3001'
+      
+      this.socket = io(serverUrl)
       
       this.socket.on('connect', () => {
         this.connected = true
