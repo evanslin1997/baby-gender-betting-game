@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👶 寶寶性別猜猜樂</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .connection-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .connected {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+        }
+        
+        .disconnected {
+            background: rgba(244, 67, 54, 0.8);
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin: 1rem 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .stat-card.boy {
+            background: linear-gradient(135deg, #36d1dc, #5b86e5);
+        }
+        
+        .stat-card.girl {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #333;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-count {
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .stat-amount {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .choice-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .choice-btn {
+            padding: 2rem 1rem;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .choice-btn:hover {
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+        
+        .choice-btn.selected {
+            border-color: #667eea;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .players-list {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .player-item.host {
+            background: linear-gradient(45deg, #ff9800, #f57f17);
+            color: white;
+        }
+        
+        .player-item.current {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .result-announcement {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 20px;
+            margin: 2rem 0;
+        }
+        
+        .result-announcement.boy {
+            background: linear-gradient(135deg, #36d1dc, #5b86e5);
+            color: white;
+        }
+        
+        .result-announcement.girl {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #333;
+        }
+        
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .result-text {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .winners-section, .losers-section {
+            margin: 2rem 0;
+        }
+        
+        .winner-item, .loser-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 10px;
+        }
+        
+        .winner-item {
+            background: rgba(76, 175, 80, 0.1);
+            border: 2px solid #4caf50;
+        }
+        
+        .loser-item {
+            background: rgba(244, 67, 54, 0.1);
+            border: 2px solid #f44336;
+        }
+        
+        .winner-item.current-player {
+            background: rgba(76, 175, 80, 0.2);
+            font-weight: bold;
+        }
+        
+        .loser-item.current-player {
+            background: rgba(244, 67, 54, 0.2);
+            font-weight: bold;
+        }
+        
+        .total-pool {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            padding: 1.5rem;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .game-rules {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .game-rules h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        
+        .game-rules ul {
+            list-style: none;
+            color: #666;
+        }
+        
+        .game-rules li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .game-rules li::before {
+            content: '•';
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .game-grid,
+            .stats-grid,
+            .choice-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>👶 寶寶性別猜猜樂</h1>
+        <div id="connection-status" class="connection-status disconnected">
+            ❌ 連接中...
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 加入遊戲界面 -->
+        <div id="join-screen" class="card">
+            <h2 style="text-align: center; margin-bottom: 2rem;">🎮 加入遊戲</h2>
+            <div class="form-group">
+                <label for="playerName">玩家暱稱</label>
+                <input id="playerName" type="text" class="input" placeholder="請輸入您的暱稱" maxlength="20">
+            </div>
+            <button id="joinBtn" class="btn btn-primary" disabled style="width: 100%;">連接中...</button>
+            
+            <div class="game-rules">
+                <h3>🎯 遊戲規則</h3>
+                <ul>
+                    <li>猜測寶寶是男生還是女生</li>
+                    <li>自訂下注金額（最低 NT$ 100）</li>
+                    <li>猜對的玩家平分猜錯玩家的下注金額</li>
+                    <li>第一個加入的玩家成為主持人</li>
+                    <li>主持人負責開始遊戲和宣布結果</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 遊戲主界面 -->
+        <div id="game-screen" class="hidden">
+            <!-- 玩家信息 -->
+            <div class="game-grid">
+                <div class="card">
+                    <h3>👤 玩家資訊</h3>
+                    <div id="player-info"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>🎭 玩家列表</h3>
+                    <div id="players-list"></div>
+                </div>
+            </div>
+            
+            <!-- 等待開始 -->
+            <div id="waiting-section" class="card hidden">
+                <h2 style="text-align: center;">🎲 準備開始遊戲</h2>
+                <div style="text-align: center; margin: 2rem 0;">
+                    <p id="waiting-message" style="margin-bottom: 1rem; font-size: 1.1rem;"></p>
+                    <button id="start-betting-btn" class="btn btn-success hidden">開始投注</button>
+                </div>
+            </div>
+            
+            <!-- 投注階段 -->
+            <div id="betting-section" class="hidden">
+                <!-- 投注統計 -->
+                <div class="card">
+                    <h3>📊 投注統計</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card boy">
+                            <span class="stat-icon">👦</span>
+                            <div class="stat-label">男生</div>
+                            <div class="stat-count"><span id="boy-count">0</span>人</div>
+                            <div class="stat-amount">NT$ <span id="boy-amount">0</span></div>
+                        </div>
+                        <div class="stat-card girl">
+                            <span class="stat-icon">👧</span>
+                            <div class="stat-label">女生</div>
+                            <div class="stat-count"><span id="girl-count">0</span>人</div>
+                            <div class="stat-amount">NT$ <span id="girl-amount">0</span></div>
+                        </div>
+                    </div>
+                    <div class="total-pool">
+                        總獎金池: NT$ <span id="total-pool">0</span>
+                    </div>
+                </div>
+                
+                <!-- 下注區域 -->
+                <div class="card">
+                    <h3>💰 下注區域</h3>
+                    <div id="current-bet" class="hidden" style="background: rgba(76, 175, 80, 0.1); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; color: #4caf50;"></div>
+                    
+                    <div class="form-group">
+                        <label>選擇預測:</label>
+                        <div class="choice-buttons">
+                            <div class="choice-btn" onclick="selectChoice('boy')">
+                                <span style="font-size: 2rem;">👦</span><br>
+                                男生
+                            </div>
+                            <div class="choice-btn" onclick="selectChoice('girl')">
+                                <span style="font-size: 2rem;">👧</span><br>
+                                女生
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bet-amount">投注金額 (NT$):</label>
+                        <input id="bet-amount" type="number" class="input" min="100" max="100000" step="100" placeholder="請輸入投注金額">
+                    </div>
+                    
+                    <button id="place-bet-btn" class="btn btn-primary" disabled style="width: 100%;">請選擇預測並輸入金額</button>
+                </div>
+                
+                <!-- 主持人控制 -->
+                <div id="host-controls" class="card hidden">
+                    <h3>🎪 主持人控制</h3>
+                    <p style="margin-bottom: 1rem;">宣布結果:</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="announceResult('boy')">
+                            👦 是男生
+                        </button>
+                        <button class="btn btn-primary" onclick="announceResult('girl')">
+                            👧 是女生
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 遊戲結果 -->
+            <div id="results-section" class="hidden">
+                <div class="card">
+                    <h2 style="text-align: center; margin-bottom: 2rem;">🎉 遊戲結果</h2>
+                    <div id="result-announcement" class="result-announcement">
+                        <div class="result-icon" id="result-icon"></div>
+                        <div class="result-text" id="result-text"></div>
+                    </div>
+                    
+                    <div id="winners-section" class="winners-section hidden">
+                        <h3 style="color: #4caf50; margin-bottom: 1rem;">🏆 恭喜中獎</h3>
+                        <div id="winners-list"></div>
+                    </div>
+                    
+                    <div id="losers-section" class="losers-section hidden">
+                        <h3 style="color: #f44336; margin-bottom: 1rem;">💸 未中獎</h3>
+                        <div id="losers-list"></div>
+                    </div>
+                    
+                    <div class="total-pool">
+                        本輪總獎金池: NT$ <span id="final-pool">0</span>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button id="new-game-btn" class="btn btn-success hidden">開始新一輪</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲狀態
+        let gameState = {
+            currentPlayer: null,
+            players: [],
+            status: 'waiting',
+            selectedChoice: null,
+            isHost: false
+        };
+        
+        // Socket.io 初始化
+        console.log('🎮 初始化遊戲...');
+        
+        // 動態決定 Socket.io 服務器地址
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const socketUrl = isLocalhost ? 'http://localhost:8888' : window.location.origin;
+        
+        console.log('🔗 連接到:', socketUrl);
+        const socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            timeout: 10000,
+            forceNew: true
+        });
+        
+        // DOM 元素
+        const connectionStatus = document.getElementById('connection-status');
+        const joinScreen = document.getElementById('join-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const joinBtn = document.getElementById('joinBtn');
+        const playerNameInput = document.getElementById('playerName');
+        
+        // Socket 事件監聽
+        socket.on('connect', () => {
+            console.log('✅ 連接成功');
+            connectionStatus.className = 'connection-status connected';
+            connectionStatus.textContent = '✅ 已連線';
+            joinBtn.disabled = false;
+            joinBtn.textContent = '加入遊戲';
+        });
+        
+        socket.on('disconnect', (reason) => {
+            console.log('❌ 連接斷開:', reason);
+            connectionStatus.className = 'connection-status disconnected';
+            connectionStatus.textContent = '❌ 連線斷開';
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('❌ 連接錯誤:', error);
+            connectionStatus.className = 'connection-status disconnected';
+            connectionStatus.textContent = '❌ 連接失敗';
+        });
+        
+        socket.on('game-state', (state) => {
+            console.log('🎮 收到遊戲狀態:', state);
+            gameState = { ...gameState, ...state };
+            updateGameUI();
+            
+            // 如果遊戲狀態是已結束且有結果數據，顯示結果
+            if (state.status === 'ended' && state.lastResults) {
+                console.log('🎉 恢復顯示遊戲結果:', state.lastResults);
+                showResults(state.lastResults);
+            }
+        });
+        
+        socket.on('betting-started', (data) => {
+            console.log('🎲 投注開始:', data);
+            gameState.status = 'betting';
+            updateGameUI();
+        });
+        
+        socket.on('bet-placed', (data) => {
+            console.log('💰 投注更新:', data);
+            updateBettingStats(data.totalBets);
+            if (data.bet.playerId === socket.id) {
+                updateCurrentBet(data.bet);
+            }
+        });
+        
+        socket.on('game-ended', (data) => {
+            console.log('🎉 遊戲結束:', data);
+            gameState.status = 'ended';
+            showResults(data);
+        });
+        
+        socket.on('new-game-started', (data) => {
+            console.log('🔄 新一輪遊戲開始:', data);
+            gameState.status = 'waiting';
+            gameState.selectedChoice = null;
+            resetGameUI();
+            updateGameStatus();
+        });
+        
+        socket.on('player-joined', (data) => {
+            console.log('👤 新玩家加入:', data);
+            gameState.players = data.players || [...gameState.players, data.player];
+            updatePlayersList();
+        });
+        
+        socket.on('player-left', (data) => {
+            console.log('👋 玩家離開:', data);
+            gameState.players = data.players;
+            updatePlayersList();
+        });
+        
+        // 加入遊戲
+        function joinGame() {
+            const name = playerNameInput.value.trim();
+            if (name) {
+                console.log('🎮 發送加入請求:', name);
+                socket.emit('join-game', name);
+            } else {
+                alert('請輸入暱稱');
+            }
+        }
+        
+        // 更新遊戲UI
+        function updateGameUI() {
+            if (gameState.currentPlayer) {
+                joinScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                
+                updatePlayerInfo();
+                updatePlayersList();
+                updateGameStatus();
+                
+                // 如果是投注階段，更新投注統計
+                if (gameState.status === 'betting' && gameState.bets) {
+                    const totalBets = {
+                        boy: gameState.bets.boy.reduce((sum, bet) => sum + bet.amount, 0),
+                        girl: gameState.bets.girl.reduce((sum, bet) => sum + bet.amount, 0),
+                        boyCount: gameState.bets.boy.length,
+                        girlCount: gameState.bets.girl.length
+                    };
+                    updateBettingStats(totalBets);
+                    
+                    // 檢查當前玩家的投注
+                    const myBoyBet = gameState.bets.boy.find(bet => bet.playerId === socket.id);
+                    const myGirlBet = gameState.bets.girl.find(bet => bet.playerId === socket.id);
+                    const myBet = myBoyBet || myGirlBet;
+                    
+                    if (myBet) {
+                        updateCurrentBet(myBet);
+                        gameState.selectedChoice = myBet.choice;
+                        
+                        // 高亮選擇的按鈕
+                        document.querySelectorAll('.choice-btn').forEach(btn => {
+                            if (btn.innerHTML.includes(myBet.choice === 'boy' ? '👦' : '👧')) {
+                                btn.classList.add('selected');
+                            }
+                        });
+                        
+                        // 填入金額
+                        document.getElementById('bet-amount').value = myBet.amount;
+                        updateBetButton();
+                    }
+                }
+            }
+        }
+        
+        // 更新玩家信息
+        function updatePlayerInfo() {
+            const playerInfo = document.getElementById('player-info');
+            playerInfo.innerHTML = `
+                <p><strong>暱稱:</strong> ${gameState.currentPlayer.name}</p>
+                <p><strong>身份:</strong> ${gameState.currentPlayer.isHost ? '🎪 主持人' : '🎮 玩家'}</p>
+                <p><strong>遊戲狀態:</strong> ${getStatusText(gameState.status)}</p>
+            `;
+            gameState.isHost = gameState.currentPlayer.isHost;
+        }
+        
+        // 更新玩家列表
+        function updatePlayersList() {
+            const playersList = document.getElementById('players-list');
+            playersList.innerHTML = `
+                <div style="margin-bottom: 1rem;"><strong>總人數: ${gameState.players.length}</strong></div>
+                ${gameState.players.map(player => `
+                    <div class="player-item ${player.isHost ? 'host' : ''} ${player.id === socket.id ? 'current' : ''}">
+                        <span>${player.name}</span>
+                        <span>${player.isHost ? '主持人' : ''}${player.id === socket.id ? ' (您)' : ''}</span>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        // 更新遊戲狀態
+        function updateGameStatus() {
+            const waitingSection = document.getElementById('waiting-section');
+            const bettingSection = document.getElementById('betting-section');
+            const resultsSection = document.getElementById('results-section');
+            
+            // 隱藏所有區域
+            waitingSection.classList.add('hidden');
+            bettingSection.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            
+            if (gameState.status === 'waiting') {
+                waitingSection.classList.remove('hidden');
+                const waitingMessage = document.getElementById('waiting-message');
+                const startButton = document.getElementById('start-betting-btn');
+                
+                if (gameState.isHost) {
+                    waitingMessage.textContent = '您是主持人，可以開始投注';
+                    startButton.classList.remove('hidden');
+                } else {
+                    waitingMessage.textContent = '等待主持人開始投注...';
+                    startButton.classList.add('hidden');
+                }
+            } else if (gameState.status === 'betting') {
+                bettingSection.classList.remove('hidden');
+                const hostControls = document.getElementById('host-controls');
+                if (gameState.isHost) {
+                    hostControls.classList.remove('hidden');
+                }
+            } else if (gameState.status === 'ended') {
+                resultsSection.classList.remove('hidden');
+            }
+        }
+        
+        // 開始投注
+        function startBetting() {
+            console.log('🎲 發送開始投注請求');
+            socket.emit('start-betting');
+        }
+        
+        // 選擇預測
+        function selectChoice(choice) {
+            gameState.selectedChoice = choice;
+            document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('selected'));
+            
+            // 找到被點擊的按鈕
+            const buttons = document.querySelectorAll('.choice-btn');
+            buttons.forEach(btn => {
+                if (btn.innerHTML.includes(choice === 'boy' ? '👦' : '👧')) {
+                    btn.classList.add('selected');
+                }
+            });
+            
+            updateBetButton();
+            console.log('✅ 已選擇:', choice);
+        }
+        
+        // 更新投注按鈕
+        function updateBetButton() {
+            const betButton = document.getElementById('place-bet-btn');
+            const betAmount = document.getElementById('bet-amount').value;
+            
+            if (gameState.selectedChoice && betAmount && betAmount >= 100) {
+                betButton.disabled = false;
+                betButton.textContent = '確認投注';
+            } else {
+                betButton.disabled = true;
+                betButton.textContent = '請選擇預測並輸入金額';
+            }
+        }
+        
+        // 下注
+        function placeBet() {
+            const amount = parseInt(document.getElementById('bet-amount').value);
+            if (gameState.selectedChoice && amount >= 100) {
+                console.log('💰 發送投注:', gameState.selectedChoice, amount);
+                socket.emit('place-bet', {
+                    choice: gameState.selectedChoice,
+                    amount: amount
+                });
+            }
+        }
+        
+        // 更新投注統計
+        function updateBettingStats(stats) {
+            document.getElementById('boy-count').textContent = stats.boyCount;
+            document.getElementById('boy-amount').textContent = stats.boy.toLocaleString();
+            document.getElementById('girl-count').textContent = stats.girlCount;
+            document.getElementById('girl-amount').textContent = stats.girl.toLocaleString();
+            document.getElementById('total-pool').textContent = (stats.boy + stats.girl).toLocaleString();
+        }
+        
+        // 更新當前投注
+        function updateCurrentBet(bet) {
+            const currentBet = document.getElementById('current-bet');
+            currentBet.classList.remove('hidden');
+            currentBet.innerHTML = `
+                <p><strong>您的投注:</strong> ${bet.choice === 'boy' ? '👦 男生' : '👧 女生'}</p>
+                <p><strong>金額:</strong> NT$ ${bet.amount.toLocaleString()}</p>
+            `;
+        }
+        
+        // 宣布結果
+        function announceResult(result) {
+            console.log('🎉 宣布結果:', result);
+            socket.emit('announce-result', result);
+        }
+        
+        // 顯示結果
+        function showResults(data) {
+            console.log('🎉 顯示遊戲結果:', data);
+            
+            // 先切換到結果界面
+            updateGameStatus();
+            
+            const resultAnnouncement = document.getElementById('result-announcement');
+            const resultIcon = document.getElementById('result-icon');
+            const resultText = document.getElementById('result-text');
+            
+            resultIcon.textContent = data.result === 'boy' ? '👦' : '👧';
+            resultText.textContent = `答案是: ${data.result === 'boy' ? '男生' : '女生'}！`;
+            resultAnnouncement.className = `result-announcement ${data.result}`;
+            
+            // 重置隱藏狀態
+            document.getElementById('winners-section').classList.add('hidden');
+            document.getElementById('losers-section').classList.add('hidden');
+            
+            // 顯示中獎者
+            if (data.winners && data.winners.length > 0) {
+                const winnersSection = document.getElementById('winners-section');
+                const winnersList = document.getElementById('winners-list');
+                winnersSection.classList.remove('hidden');
+                
+                winnersList.innerHTML = data.winners.map(winner => `
+                    <div class="winner-item ${winner.playerId === socket.id ? 'current-player' : ''}">
+                        <span><strong>${winner.playerName}</strong></span>
+                        <span>投注: NT$ ${winner.amount.toLocaleString()}</span>
+                        <span style="color: #4caf50; font-weight: bold;">獲得: NT$ ${(winner.winAmount || 0).toLocaleString()}</span>
+                    </div>
+                `).join('');
+            }
+            
+            // 顯示未中獎者
+            if (data.losers && data.losers.length > 0) {
+                const losersSection = document.getElementById('losers-section');
+                const losersList = document.getElementById('losers-list');
+                losersSection.classList.remove('hidden');
+                
+                losersList.innerHTML = data.losers.map(loser => `
+                    <div class="loser-item ${loser.playerId === socket.id ? 'current-player' : ''}">
+                        <span><strong>${loser.playerName}</strong></span>
+                        <span style="color: #f44336;">損失: NT$ ${loser.amount.toLocaleString()}</span>
+                        <span></span>
+                    </div>
+                `).join('');
+            }
+            
+            document.getElementById('final-pool').textContent = (data.totalPool || 0).toLocaleString();
+            
+            // 主持人可以開始新一輪
+            const newGameBtn = document.getElementById('new-game-btn');
+            if (gameState.isHost) {
+                newGameBtn.classList.remove('hidden');
+                console.log('✅ 主持人可以看到"開始新一輪"按鈕');
+            } else {
+                newGameBtn.classList.add('hidden');
+                console.log('ℹ️ 非主持人，隱藏"開始新一輪"按鈕');
+            }
+        }
+        
+        // 開始新一輪
+        function startNewGame() {
+            console.log('🔄 開始新一輪');
+            socket.emit('new-game');
+        }
+        
+        // 重置遊戲UI
+        function resetGameUI() {
+            // 重置投注相關UI
+            document.getElementById('current-bet').classList.add('hidden');
+            document.getElementById('bet-amount').value = '';
+            document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('selected'));
+            
+            // 重置統計
+            document.getElementById('boy-count').textContent = '0';
+            document.getElementById('boy-amount').textContent = '0';
+            document.getElementById('girl-count').textContent = '0';
+            document.getElementById('girl-amount').textContent = '0';
+            document.getElementById('total-pool').textContent = '0';
+            
+            // 隱藏結果相關元素
+            document.getElementById('winners-section').classList.add('hidden');
+            document.getElementById('losers-section').classList.add('hidden');
+            document.getElementById('new-game-btn').classList.add('hidden');
+            
+            // 重置按鈕狀態
+            updateBetButton();
+            
+            console.log('✅ 遊戲UI已完全重置');
+        }
+        
+        // 輔助函數
+        function getStatusText(status) {
+            switch (status) {
+                case 'waiting': return '等待開始';
+                case 'betting': return '投注中';
+                case 'ended': return '已結束';
+                default: return '未知';
+            }
+        }
+        
+        // 事件監聽
+        joinBtn.addEventListener('click', joinGame);
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+        
+        document.getElementById('start-betting-btn').addEventListener('click', startBetting);
+        document.getElementById('place-bet-btn').addEventListener('click', placeBet);
+        document.getElementById('bet-amount').addEventListener('input', updateBetButton);
+        document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+        
+        console.log('🎮 遊戲初始化完成！');
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>調試測試頁面</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>調試測試頁面</h1>
+    <div id="log"></div>
+    
+    <button onclick="joinGame()">加入遊戲</button>
+    <button onclick="startBetting()">開始投注</button>
+    <button onclick="placeBet()">下注</button>
+    <button onclick="announceResult()">宣布結果</button>
+    <button onclick="newGame()">新一輪</button>
+
+    <script>
+        const socket = io('http://localhost:3333');
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            log.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+        
+        socket.on('connect', () => addLog('✅ 連接成功'));
+        socket.on('disconnect', () => addLog('❌ 連接斷開'));
+        
+        socket.on('game-state', (data) => addLog('🎮 遊戲狀態: ' + JSON.stringify(data)));
+        socket.on('betting-started', (data) => addLog('🎲 投注開始: ' + JSON.stringify(data)));
+        socket.on('bet-placed', (data) => addLog('💰 投注成功: ' + JSON.stringify(data)));
+        socket.on('game-ended', (data) => addLog('🎉 遊戲結束: ' + JSON.stringify(data)));
+        socket.on('new-game-started', (data) => addLog('🔄 新遊戲開始: ' + JSON.stringify(data)));
+        socket.on('error', (error) => addLog('❌ 錯誤: ' + JSON.stringify(error)));
+        
+        function joinGame() {
+            socket.emit('join-game', '測試玩家' + Math.floor(Math.random() * 100));
+            addLog('📤 發送加入遊戲');
+        }
+        
+        function startBetting() {
+            socket.emit('start-betting');
+            addLog('📤 發送開始投注');
+        }
+        
+        function placeBet() {
+            socket.emit('place-bet', { choice: 'boy', amount: 1000 });
+            addLog('📤 發送投注');
+        }
+        
+        function announceResult() {
+            socket.emit('announce-result', 'boy');
+            addLog('📤 發送宣布結果');
+        }
+        
+        function newGame() {
+            socket.emit('new-game');
+            addLog('📤 發送新一輪');
+        }
+    </script>
+</body>
+</html>

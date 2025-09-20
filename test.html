@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寶寶性別猜猜樂 - 測試版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .status {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 2px solid #4caf50;
+        }
+        
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 2px solid #f44336;
+        }
+        
+        .form-group {
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .game-info {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: left;
+            margin-top: 2rem;
+        }
+        
+        .game-info h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        
+        .game-info ul {
+            list-style: none;
+            color: #666;
+        }
+        
+        .game-info li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .game-info li::before {
+            content: '•';
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>👶 寶寶性別猜猜樂</h1>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <div id="connection-status" class="status disconnected">
+                ❌ 連接中...
+            </div>
+            
+            <div id="join-form">
+                <h2>🎮 加入遊戲</h2>
+                <div class="form-group">
+                    <label for="playerName">玩家暱稱</label>
+                    <input id="playerName" type="text" class="input" placeholder="請輸入您的暱稱" maxlength="20">
+                </div>
+                <button id="joinBtn" class="btn" disabled>連接中...</button>
+            </div>
+            
+            <div class="game-info">
+                <h3>🎯 遊戲規則</h3>
+                <ul>
+                    <li>猜測寶寶是男生還是女生</li>
+                    <li>自訂下注金額</li>
+                    <li>猜對的玩家平分猜錯玩家的下注金額</li>
+                    <li>第一個加入的玩家成為主持人</li>
+                    <li>主持人負責開始遊戲和宣布結果</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Socket.io
+        console.log('正在初始化 Socket.io...');
+        
+        const socket = io('http://localhost:3333', {
+            transports: ['websocket', 'polling'],
+            timeout: 5000,
+            forceNew: true
+        });
+        
+        const connectionStatus = document.getElementById('connection-status');
+        const joinBtn = document.getElementById('joinBtn');
+        const playerNameInput = document.getElementById('playerName');
+        
+        socket.on('connect', () => {
+            console.log('✅ 連接成功，Socket ID:', socket.id);
+            connectionStatus.className = 'status connected';
+            connectionStatus.textContent = '✅ 已連線';
+            joinBtn.disabled = false;
+            joinBtn.textContent = '加入遊戲';
+        });
+        
+        socket.on('disconnect', (reason) => {
+            console.log('❌ 連接斷開，原因:', reason);
+            connectionStatus.className = 'status disconnected';
+            connectionStatus.textContent = '❌ 連線斷開';
+            joinBtn.disabled = true;
+            joinBtn.textContent = '重新連接中...';
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('❌ 連接錯誤:', error);
+            connectionStatus.className = 'status disconnected';
+            connectionStatus.textContent = '❌ 連接失敗: ' + error.message;
+            joinBtn.disabled = true;
+            joinBtn.textContent = '連接失敗';
+        });
+        
+        socket.on('connected', (data) => {
+            console.log('🔗 服務器連接確認:', data);
+        });
+
+        socket.on('game-state', (state) => {
+            console.log('🎮 遊戲狀態:', state);
+            // 隱藏加入表單，顯示遊戲界面
+            document.getElementById('join-form').innerHTML = `
+                <h2>🎉 成功加入遊戲！</h2>
+                <div style="background: rgba(76, 175, 80, 0.1); padding: 1rem; border-radius: 10px; margin: 1rem 0;">
+                    <p><strong>玩家:</strong> ${state.currentPlayer.name}</p>
+                    <p><strong>身份:</strong> ${state.currentPlayer.isHost ? '🎪 主持人' : '🎮 玩家'}</p>
+                    <p><strong>總人數:</strong> ${state.totalPlayers}</p>
+                    <p><strong>遊戲狀態:</strong> ${state.status === 'waiting' ? '等待開始' : state.status === 'betting' ? '投注中' : '已結束'}</p>
+                </div>
+                ${state.currentPlayer.isHost && state.status === 'waiting' ? 
+                    '<button onclick="startBetting()" class="btn" style="margin-top: 1rem;">開始投注</button>' : 
+                    state.status === 'waiting' ? '<p>等待主持人開始遊戲...</p>' : ''
+                }
+                <div id="game-area"></div>
+            `;
+        });
+        
+        socket.on('join-success', (data) => {
+            console.log('✅ 加入成功:', data);
+        });
+        
+        socket.on('player-joined', (data) => {
+            console.log('👤 新玩家加入:', data);
+            alert('🎉 新玩家加入：' + data.player.name + '\n當前總人數：' + data.totalPlayers);
+        });
+
+        socket.on('error', (error) => {
+            console.error('❌ 錯誤:', error);
+            alert('錯誤: ' + error.message);
+        });
+
+        function startBetting() {
+            console.log('🎲 發送開始投注請求');
+            socket.emit('start-betting');
+        }
+        
+        joinBtn.addEventListener('click', () => {
+            const name = playerNameInput.value.trim();
+            if (name) {
+                console.log('🎮 發送加入遊戲請求:', name);
+                socket.emit('join-game', name);
+            } else {
+                alert('請輸入暱稱');
+            }
+        });
+        
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                joinBtn.click();
+            }
+        });
+        
+        // 連接狀態監控
+        setTimeout(() => {
+            if (!socket.connected) {
+                console.log('⚠️ 5秒後仍未連接，請檢查服務器狀態');
+                connectionStatus.textContent = '⚠️ 連接超時，請刷新頁面重試';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
