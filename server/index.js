@@ -44,12 +44,70 @@ let gameState = {
   host: null
 };
 
+// 主持人狀態驗證和修正函數
+function validateAndFixHostState() {
+  const hostPlayers = Array.from(gameState.players.values()).filter(p => p.isHost);
+  const currentHost = gameState.host ? gameState.players.get(gameState.host) : null;
+  const isHostOnline = gameState.host ? io.sockets.sockets.has(gameState.host) : false;
+  
+  console.log(`[驗證] 主持人狀態檢查 - 標記為主持人的玩家數: ${hostPlayers.length}, 設定的主持人: ${gameState.host}, 主持人在線: ${isHostOnline}`);
+  
+  // 如果有多個主持人，強制修正
+  if (hostPlayers.length > 1) {
+    console.error(`[修正] 發現 ${hostPlayers.length} 個主持人，強制修正...`);
+    gameState.players.forEach((player, playerId) => {
+      player.isHost = (playerId === gameState.host);
+    });
+    
+    // 廣播更新後的玩家狀態
+    io.emit('players-updated', {
+      players: Array.from(gameState.players.values())
+    });
+  }
+  
+  // 如果主持人離線，轉移給其他人
+  if (gameState.host && (!currentHost || !isHostOnline)) {
+    console.log(`[修正] 主持人離線，尋找新主持人...`);
+    const onlinePlayers = Array.from(gameState.players.values())
+      .filter(p => io.sockets.sockets.has(p.id));
+    
+    if (onlinePlayers.length > 0) {
+      // 清除所有主持人狀態
+      gameState.players.forEach((player, playerId) => {
+        player.isHost = false;
+      });
+      
+      // 設置新主持人
+      const newHost = onlinePlayers[0];
+      gameState.host = newHost.id;
+      gameState.players.get(newHost.id).isHost = true;
+      
+      console.log(`[修正] 新主持人: ${newHost.name} (${newHost.id})`);
+      
+      // 廣播更新
+      io.emit('players-updated', {
+        players: Array.from(gameState.players.values())
+      });
+    } else {
+      gameState.host = null;
+      console.log(`[修正] 沒有在線玩家，清除主持人`);
+    }
+  }
+}
+
+// 每5秒檢查一次主持人狀態
+setInterval(validateAndFixHostState, 5000);
+
 io.on('connection', (socket) => {
   console.log('用戶連接:', socket.id);
 
   socket.on('join-game', (data) => {
     const playerName = typeof data === 'string' ? data : data.playerName;
     const confirmRejoin = typeof data === 'object' ? data.confirmRejoin : false;
+    
+    console.log(`=== JOIN-GAME 開始: ${playerName} (${socket.id}) ===`);
+    console.log(`當前主持人: ${gameState.host}`);
+    console.log(`當前玩家數量: ${gameState.players.size}`);
     
     // 檢查是否有相同名稱的玩家記錄
     const existingPlayerEntry = Array.from(gameState.players.entries())
@@ -63,11 +121,14 @@ io.on('connection', (socket) => {
       // 檢查該玩家是否正在線上（通過檢查socket連接）
       const isPlayerOnline = io.sockets.sockets.has(existingSocketId);
       
+      console.log(`找到同名玩家記錄: ${existingSocketId}, 是否在線: ${isPlayerOnline}`);
+      
       if (isPlayerOnline && existingSocketId !== socket.id) {
         // 如果有其他玩家正在線且使用這個名稱，拒絕加入
         socket.emit('join-error', {
           message: `暱稱 "${playerName}" 已被其他玩家使用，請選擇其他名稱`
         });
+        console.log(`拒絕加入: 名稱已被使用`);
         return;
       }
       
@@ -77,6 +138,7 @@ io.on('connection', (socket) => {
           playerName: playerName,
           message: `暱稱 "${playerName}" 已存在記錄，是否要重新加入並修改選項？`
         });
+        console.log(`要求確認重新加入`);
         return;
       }
     }
@@ -84,6 +146,8 @@ io.on('connection', (socket) => {
     if (existingPlayerEntry && existingPlayerEntry[0] !== socket.id) {
       // 重新加入：移除舊的socket ID記錄，使用新的socket ID
       const [oldSocketId, existingPlayer] = existingPlayerEntry;
+      console.log(`處理重新加入: 舊ID=${oldSocketId}, 新ID=${socket.id}, 是否為主持人=${existingPlayer.isHost}`);
+      
       gameState.players.delete(oldSocketId);
       gameState.players.set(socket.id, {
         ...existingPlayer,
@@ -100,13 +164,24 @@ io.on('connection', (socket) => {
       
       // 如果是主持人重新加入，更新主持人ID
       if (gameState.host === oldSocketId) {
+        console.log(`主持人重新加入: 更新主持人ID從 ${oldSocketId} 到 ${socket.id}`);
         gameState.host = socket.id;
+        
+        // 先清除所有人的主持人狀態，再設置新的
+        gameState.players.forEach((player, playerId) => {
+          player.isHost = false;
+        });
+        gameState.players.get(socket.id).isHost = true;
+        
+        console.log(`主持人 ${playerName} 重新加入`);
       }
       
       isRejoining = true;
       console.log(`玩家 ${playerName} 重新加入遊戲，投注記錄已更新`);
     } else if (!gameState.players.has(socket.id)) {
       // 新玩家加入
+      console.log(`新玩家加入: ${playerName}`);
+      
       gameState.players.set(socket.id, {
         id: socket.id,
         name: playerName,
@@ -114,12 +189,37 @@ io.on('connection', (socket) => {
         balance: 0
       });
 
-      if (gameState.players.size === 1) {
+      // 檢查是否需要設為主持人：沒有現任主持人或現任主持人離線
+      const currentHost = gameState.host ? gameState.players.get(gameState.host) : null;
+      const isCurrentHostOnline = gameState.host ? io.sockets.sockets.has(gameState.host) : false;
+      
+      console.log(`主持人檢查 - 當前主持人存在: ${!!currentHost}, 主持人在線: ${isCurrentHostOnline}`);
+      
+      if (!currentHost || !isCurrentHostOnline) {
+        // 先清除所有人的主持人狀態，避免重複主持人
+        gameState.players.forEach((player, playerId) => {
+          player.isHost = false;
+        });
+        
+        // 設置新玩家為主持人
         gameState.players.get(socket.id).isHost = true;
         gameState.host = socket.id;
+        console.log(`${playerName} 成為新主持人`);
       }
       
       console.log(`新玩家 ${playerName} 加入遊戲`);
+    }
+    
+    // 驗證主持人狀態一致性
+    const hostPlayers = Array.from(gameState.players.values()).filter(p => p.isHost);
+    console.log(`加入完成後主持人數量: ${hostPlayers.length}, 主持人列表:`, hostPlayers.map(p => `${p.name}(${p.id})`));
+    
+    if (hostPlayers.length > 1) {
+      console.error(`⚠️ 發現多個主持人！強制修正...`);
+      // 強制修正：只保留 gameState.host 指定的主持人
+      gameState.players.forEach((player, playerId) => {
+        player.isHost = (playerId === gameState.host);
+      });
     }
 
     // 發送完整遊戲狀態給新加入的玩家
@@ -218,43 +318,90 @@ io.on('connection', (socket) => {
       
       let winners = [];
       let losers = [];
+      let punished = [];
       
+      // 隨機抽取3個獲勝者平分獎金
       if (winningBets.length > 0) {
-        // 獲勝者平分所有獎金（包含失敗者的投注）
-        const prizePerWinner = Math.floor(totalPool / winningBets.length);
-        winners = winningBets.map(bet => ({
+        const shuffledWinners = [...winningBets].sort(() => Math.random() - 0.5);
+        const selectedWinners = shuffledWinners.slice(0, Math.min(3, shuffledWinners.length));
+        const prizePerWinner = Math.floor(totalPool / selectedWinners.length);
+        
+        winners = selectedWinners.map(bet => ({
           ...bet,
           winAmount: prizePerWinner
         }));
       }
       
-      // 失敗者列表
+      // 隨機抽取3個失敗者接受懲罰
+      if (losingBets.length > 0) {
+        const shuffledLosers = [...losingBets].sort(() => Math.random() - 0.5);
+        punished = shuffledLosers.slice(0, Math.min(3, shuffledLosers.length));
+      }
+      
+      // 所有失敗者列表
       losers = losingBets;
 
       io.emit('game-ended', {
         result,
         winners,
         losers,
-        totalPool
+        punished,
+        totalPool,
+        punishment: null // 主持人將另外宣布懲罰內容
+      });
+    }
+  });
+
+  // 主持人宣布懲罰內容
+  socket.on('announce-punishment', (data) => {
+    if (gameState.players.get(socket.id)?.isHost && gameState.status === 'ended') {
+      io.emit('punishment-announced', {
+        punishment: data.punishment,
+        punishedPlayers: data.punishedPlayers || []
       });
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('用戶斷線:', socket.id);
+    console.log(`=== DISCONNECT 開始: ${socket.id} ===`);
     
     const disconnectedPlayer = gameState.players.get(socket.id);
-    if (!disconnectedPlayer) return;
+    if (!disconnectedPlayer) {
+      console.log('斷線的玩家不在記錄中');
+      return;
+    }
+    
+    console.log(`斷線玩家: ${disconnectedPlayer.name}, 是否為主持人: ${disconnectedPlayer.isHost}`);
+    console.log(`當前主持人: ${gameState.host}`);
     
     // 如果是主持人離開，轉移主持人權限給其他玩家
     if (gameState.host === socket.id && gameState.players.size > 1) {
+      console.log(`主持人離線，需要轉移權限`);
+      
       const remainingPlayers = Array.from(gameState.players.values())
         .filter(p => p.id !== socket.id);
       
+      console.log(`剩餘玩家數量: ${remainingPlayers.length}`);
+      
       if (remainingPlayers.length > 0) {
-        gameState.host = remainingPlayers[0].id;
-        gameState.players.get(gameState.host).isHost = true;
-        console.log(`主持人轉移給: ${remainingPlayers[0].name}`);
+        // 先清除所有人的主持人狀態
+        gameState.players.forEach((player) => {
+          player.isHost = false;
+        });
+        
+        // 設置新主持人
+        const newHost = remainingPlayers[0];
+        gameState.host = newHost.id;
+        gameState.players.get(newHost.id).isHost = true;
+        
+        console.log(`主持人轉移給: ${newHost.name} (${newHost.id})`);
+        
+        // 驗證主持人狀態
+        const hostPlayers = Array.from(gameState.players.values()).filter(p => p.isHost);
+        console.log(`轉移後主持人數量: ${hostPlayers.length}`);
+      } else {
+        console.log(`沒有其他玩家可以轉移主持人權限`);
+        gameState.host = null;
       }
     }
     
@@ -269,6 +416,8 @@ io.on('connection', (socket) => {
       totalPlayers: gameState.players.size,
       newHost: gameState.host
     });
+    
+    console.log(`=== DISCONNECT 完成 ===`);
   });
 });
 

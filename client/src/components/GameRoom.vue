@@ -164,7 +164,7 @@
 
         <div class="results-breakdown">
           <div v-if="gameStore.winners.length > 0" class="winners-section">
-            <h3>🏆 恭喜中獎</h3>
+            <h3>🏆 恭喜中獎 (隨機抽取{{ gameStore.winners.length }}位)</h3>
             <div class="winner-list">
               <div
                 v-for="winner in gameStore.winners"
@@ -175,6 +175,48 @@
                 <span class="winner-name">{{ winner.playerName }}</span>
                 <span class="winner-bet">投注: NT$ {{ winner.amount.toLocaleString() }}</span>
                 <span class="winner-prize">獲得: NT$ {{ winner.winAmount?.toLocaleString() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="gameStore.punished.length > 0" class="punished-section">
+            <h3>⚡ 接受懲罰 (隨機抽取{{ gameStore.punished.length }}位)</h3>
+            <div class="punished-list">
+              <div
+                v-for="punished in gameStore.punished"
+                :key="punished.playerId"
+                class="punished-item"
+                :class="{ 'is-current-player': punished.playerId === gameStore.currentPlayer?.id }"
+              >
+                <span class="punished-name">{{ punished.playerName }}</span>
+                <span class="punished-bet">投注: NT$ {{ punished.amount.toLocaleString() }}</span>
+              </div>
+            </div>
+            
+            <div v-if="gameStore.isHost && !gameStore.punishment" class="punishment-input mt-3">
+              <div class="form-group">
+                <label for="punishment">請宣布懲罰內容:</label>
+                <input
+                  id="punishment"
+                  v-model="punishmentText"
+                  type="text"
+                  class="input"
+                  placeholder="例如：唱一首歌、做10個伏地挺身..."
+                  maxlength="100"
+                />
+              </div>
+              <button
+                @click="announcePunishment"
+                class="btn btn-danger"
+                :disabled="!punishmentText.trim()"
+              >
+                宣布懲罰
+              </button>
+            </div>
+            
+            <div v-if="gameStore.punishment" class="punishment-announcement">
+              <div class="punishment-text">
+                🎯 懲罰內容: <strong>{{ gameStore.punishment }}</strong>
               </div>
             </div>
           </div>
@@ -218,6 +260,7 @@ import { useGameStore } from '../stores/game'
 const gameStore = useGameStore()
 const selectedChoice = ref<'boy' | 'girl'>('boy')
 const betAmount = ref<number>(1000)
+const punishmentText = ref<string>('')
 
 const statusClass = computed(() => {
   switch (gameStore.gameState.status) {
@@ -245,6 +288,13 @@ const placeBet = () => {
 
 const announceResult = (result: 'boy' | 'girl') => {
   gameStore.announceResult(result)
+}
+
+const announcePunishment = () => {
+  if (punishmentText.value.trim()) {
+    gameStore.announcePunishment(punishmentText.value.trim())
+    punishmentText.value = ''
+  }
 }
 
 const startNewGame = () => {
@@ -585,6 +635,81 @@ const startNewGame = () => {
   background: rgba(158, 158, 158, 0.1);
   padding: 0.3rem 0.6rem;
   border-radius: 10px;
+}
+
+.punished-section h3 {
+  color: #ff9800;
+  margin-bottom: 1rem;
+}
+
+.punished-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.punished-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  border: 2px solid #ff9800;
+  color: #e65100;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.2);
+}
+
+.punished-item.is-current-player {
+  background: linear-gradient(135deg, #ffe0b2, #ffcc80);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.4);
+  border: 3px solid #f57c00;
+}
+
+.punished-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.punished-bet {
+  color: #e65100;
+  font-size: 0.9rem;
+}
+
+.punishment-input {
+  background: rgba(255, 152, 0, 0.1);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 2px solid #ff9800;
+}
+
+.punishment-input .form-group {
+  margin-bottom: 1rem;
+}
+
+.punishment-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #e65100;
+}
+
+.punishment-announcement {
+  background: linear-gradient(135deg, #ffecb3, #ffd54f);
+  padding: 1rem;
+  border-radius: 10px;
+  border: 2px solid #ffc107;
+  margin-top: 1rem;
+}
+
+.punishment-text {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #f57c00;
+  text-align: center;
 }
 
 .total-pool-final {

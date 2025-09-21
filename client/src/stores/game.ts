@@ -51,12 +51,14 @@ export const useGameStore = defineStore('game', {
     },
     winners: [] as Bet[],
     losers: [] as Bet[],
+    punished: [] as Bet[],
     totalPool: 0,
     middlePlayers: [] as Bet[],
     totalPlayers: 0,
     gameType: 'classic' as 'classic' | 'ranking',
     joinError: null as string | null,
-    rejoinConfirm: null as { playerName: string; message: string } | null
+    rejoinConfirm: null as { playerName: string; message: string } | null,
+    punishment: null as string | null
   }),
 
   getters: {
@@ -176,7 +178,13 @@ export const useGameStore = defineStore('game', {
         this.gameState.result = data.result
         this.winners = data.winners || []
         this.losers = data.losers || []
+        this.punished = data.punished || []
         this.totalPool = data.totalPool || 0
+        this.punishment = data.punishment || null
+      })
+
+      this.socket.on('punishment-announced', (data) => {
+        this.punishment = data.punishment
       })
 
       this.socket.on('join-error', (data) => {
@@ -219,6 +227,15 @@ export const useGameStore = defineStore('game', {
     announceResult(result: 'boy' | 'girl') {
       if (this.socket && this.isHost && this.gameState.status === 'betting') {
         this.socket.emit('announce-result', result)
+      }
+    },
+
+    announcePunishment(punishment: string) {
+      if (this.socket && this.isHost && this.gameState.status === 'ended') {
+        this.socket.emit('announce-punishment', { 
+          punishment,
+          punishedPlayers: this.punished 
+        })
       }
     },
 
